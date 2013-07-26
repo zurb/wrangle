@@ -2,20 +2,20 @@
 * {
 	margin: 0;
 	padding: 0;
-	-box-sizing: border-box;
+	box-sizing: border-box;
 	background: #ddd;
 	font-family: sans-serif;
 }
 
 #gallery {
-	width: 1024px;
+	width: 100%;
 	position: relative;
 	background: white;
-	overflow: hidden;
 	-webkit-user-select: none;
 }
 	#gallery canvas {
 		background: white;
+    width: 100%;
 	}
 
 #gallery ul {
@@ -23,15 +23,13 @@
 	top: 0;
 	left: 0;
 	width: 100%;
-	height: 500px;
-	overflow-y: scroll;
 	background: transparent;
 }
 #gallery.drawing ul {
-	overflow-y: hidden;
+  /*pointer-events: none;*/
 }
 #gallery li {
-	width: 20%;
+	width: 25%;
 	display: inline-block;
 	margin: 1em;
 	padding: 1em;

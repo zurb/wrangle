@@ -10,39 +10,50 @@
 	</head>
 	<body>
 		<div data-drawselect id="gallery">
-			<canvas data-canvas width="1024px" height="600px"></canvas>
-			<ul data-items>
-				<li>
-					<img src="http://placekitten.com/400/300" alt="Kitty">
-				</li>
-				<li>
-					<img src="http://placekitten.com/400/301" alt="Kitty">
-				</li>
-				<li>
-					<img src="http://placekitten.com/400/302" alt="Kitty">
-				</li>
-				<li>
-					<img src="http://placekitten.com/400/303" alt="Kitty">
-				</li>
-				<li>
-					<img src="http://placekitten.com/401/300" alt="Kitty">
-				</li>
-				<li>
-					<img src="http://placekitten.com/402/300" alt="Kitty">
-				</li>
-				<li>
-					<img src="http://placekitten.com/403/300" alt="Kitty">
-				</li>
-				<li>
-					<img src="http://placekitten.com/404/300" alt="Kitty">
-				</li>
-			</ul>
+      <div data-selectarea>
+  			<canvas data-canvas width="1024px" height="600px"></canvas>
+  			<ul data-items>
+  				<li>
+  					<img src="http://placekitten.com/400/300" alt="Kitty">
+  				</li>
+  				<li>
+  					<img src="http://placekitten.com/400/301" alt="Kitty">
+  				</li>
+  				<li>
+  					<img src="http://placekitten.com/400/302" alt="Kitty">
+  				</li>
+  				<li>
+  					<img src="http://placekitten.com/400/303" alt="Kitty">
+  				</li>
+  				<li>
+  					<img src="http://placekitten.com/401/300" alt="Kitty">
+  				</li>
+  				<li>
+  					<img src="http://placekitten.com/402/300" alt="Kitty">
+  				</li>
+  				<li>
+  					<img src="http://placekitten.com/403/300" alt="Kitty">
+  				</li>
+  				<li>
+  					<img src="http://placekitten.com/404/300" alt="Kitty">
+  				</li>
+        </ul>
+      </div>
 			<a href="#" class="button" data-clear>Select None</a>
 			<a href="#" class="button" data-all>Select All</a>
 			<a href="#" class="delete button" data-action="delete">Delete</a>
 		</div>
 
 		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
-		<script src="js/script.js" type="text/javascript"></script>
+		<script src="js/drawselect.js" type="text/javascript"></script>
+    <script type="text/javascript">
+      $(window).on('load', function(){
+        $('[data-drawselect]').drawselect({}, {
+          'delete': function(items) {
+            items.remove();
+          }
+        });
+      });
+    </script>
 	</body>
 </html>
