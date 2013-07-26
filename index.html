@@ -10,7 +10,7 @@
 	</head>
 	<body>
 		<div data-drawselect id="gallery">
-      <div data-selectarea>
+      <div data-selectarea class="col-1">
   			<canvas data-canvas width="1024px" height="600px"></canvas>
   			<ul data-items>
   				<li>
@@ -37,11 +37,47 @@
   				<li>
   					<img src="http://placekitten.com/404/300" alt="Kitty">
   				</li>
+          <li>
+            <img src="http://placekitten.com/404/300" alt="Kitty">
+          </li>
+          <li>
+            <img src="http://placekitten.com/404/300" alt="Kitty">
+          </li>
+          <li>
+            <img src="http://placekitten.com/404/300" alt="Kitty">
+          </li>
+          <li>
+            <img src="http://placekitten.com/404/300" alt="Kitty">
+          </li>
+          <li>
+            <img src="http://placekitten.com/404/300" alt="Kitty">
+          </li>
+          <li>
+            <img src="http://placekitten.com/404/300" alt="Kitty">
+          </li>
+          <li>
+            <img src="http://placekitten.com/404/300" alt="Kitty">
+          </li>
+          <li>
+            <img src="http://placekitten.com/404/300" alt="Kitty">
+          </li>
+          <li>
+            <img src="http://placekitten.com/404/300" alt="Kitty">
+          </li>
+          <li>
+            <img src="http://placekitten.com/404/300" alt="Kitty">
+          </li>
+          <li>
+            <img src="http://placekitten.com/404/300" alt="Kitty">
+          </li>
         </ul>
       </div>
-			<a href="#" class="button" data-clear>Select None</a>
-			<a href="#" class="button" data-all>Select All</a>
-			<a href="#" class="delete button" data-action="delete">Delete</a>
+      <div class="col-2">
+  			<a href="#" class="button" data-clear>Select None</a>
+  			<a href="#" class="button" data-all>Select All</a>
+        <a href="#" class="edit button" data-action="reverse">Reverse</a>
+  			<a href="#" class="delete button" data-action="delete">Delete</a>
+      </div>
 		</div>
 
 		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
@@ -51,6 +87,12 @@
         $('[data-drawselect]').drawselect({}, {
           'delete': function(items) {
             items.remove();
+          },
+          'reverse': function(items) {
+            var rev = $.makeArray(items);
+            rev.reverse();
+            console.log(rev);
+            items.replaceWith();
           }
         });
       });

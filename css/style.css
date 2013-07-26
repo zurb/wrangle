@@ -7,6 +7,18 @@
 	font-family: sans-serif;
 }
 
+.col-1, .col-2 {
+  float: left;
+  position: relative;
+}
+.col-1 {
+  width: 75%;
+}
+.col-2 {
+  width: 25%;
+  padding: 1em;
+}
+
 #gallery {
 	width: 100%;
 	position: relative;
@@ -24,6 +36,7 @@
 	left: 0;
 	width: 100%;
 	background: transparent;
+  padding: 1em;
 }
 #gallery.drawing ul {
   /*pointer-events: none;*/
@@ -47,9 +60,9 @@
 	}
 
 .button {
-	display: inline-block;
+	display: block;
 	padding: 0.5em 1em;
-	margin-right: 1em;
+	margin-bottom: 1em;
 	color: #fff;
 	background: #6163cc;
     border-radius: 4px;
@@ -61,3 +74,9 @@
 	.delete.button {
 		background: #cc4f56;
 	}
+  .edit.button {
+    background: #00c408;
+  }
+  .disabled.button {
+    opacity: 0.75;
+  }
