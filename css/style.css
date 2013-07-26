@@ -42,9 +42,9 @@
   /*pointer-events: none;*/
 }
 #gallery li {
-	width: 25%;
+	width: 30%;
 	display: inline-block;
-	margin: 1em;
+	margin: 0 1em 1em 0;
 	padding: 1em;
 	background: #fff;
 	border: 1px solid #ccc;

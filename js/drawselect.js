@@ -132,13 +132,16 @@
     });
     return boxes;
   }
+  DrawSelect.prototype.setupDrawing = function() {
+    this.$container.addClass(this.settings.drawingClass);
+    this.itemBoxes = this.getBoxes();
+  }
   DrawSelect.prototype.startDrawing = function() {
     var self = this;
 
-    self.$container.addClass(self.settings.drawingClass);
-    self.itemBoxes = self.getBoxes();
+    this.setupDrawing();
 
-    self.$selectarea.on(self.events.move, function(e) {
+    this.$selectarea.on(self.events.move, function(e) {
       evt = e.originalEvent;
 
       // Store coordinates of mouse
