@@ -1,6 +1,6 @@
 ;(function($) {
 
-	var DrawSelect = function(elem, settings, actions) {
+  var DrawSelect = function(elem, settings, actions) {
 
     /*
       Properties
@@ -8,10 +8,10 @@
 
     var self = this;
 
-		// DOM elements
-		this.$container  = elem;
+    // DOM elements
+    this.$container  = elem;
     this.$selectarea = this.$container.find('[data-selectarea]')
-		this.canvas      = this.$container.find('canvas')[0];
+    this.canvas      = this.$container.find('canvas')[0];
     this.$list       = this.$container.find('[data-items]').eq(0);
     this.$items      = this.$list.children('li');
     this.draw        = this.canvas.getContext('2d');
@@ -25,20 +25,19 @@
     // Actions
     this.actions = {};
 
-		// Drawing context
-		this.draw = this.canvas.getContext('2d');
+    // Drawing context
+    this.draw = this.canvas.getContext('2d');
 
-		// Drawing coordinates
-		this.lastCoords = {};
-    this.lastTouches = [];
+    // Drawing coordinates
+    this.lastCoords = [];
 
     // Drawing enabled
     this.drawEnabled = true;
 
-		// List of bounding boxes for list items
-		this.itemBoxes     = [];
-		// List of selected items
-		this.selectedItems = [];
+    // List of bounding boxes for list items
+    this.itemBoxes     = [];
+    // List of selected items
+    this.selectedItems = [];
 
     // Touch support?
     if (typeof window.ontouchstart !== 'undefined') {
@@ -157,72 +156,60 @@
     });
     return boxes;
   }
-  DrawSelect.prototype.setupDrawing = function() {
-    this.$container.addClass(this.settings.drawingClass);
-    this.itemBoxes = this.getBoxes();
-  }
   DrawSelect.prototype.startDrawing = function(e) {
     var self = this;
 
-    this.setupDrawing();
+    this.$container.addClass(this.settings.drawingClass);
+    this.itemBoxes = this.getBoxes();
 
-    this.$selectarea.on('mousemove', function(e) {
+    this.lastCoords = [];
 
-      // Store coordinates of mouse
-      var x = e.pageX - self.$container.offset().left;  
-      var y = e.pageY - self.$container.offset().top;
-      var newCoords = { x: x, y: y, }
-
-      // If this is the first move, establish a starting point
-      if (typeof self.lastCoords.x !== 'number') {
-          self.lastCoords.x = x;
-          self.lastCoords.y = y;
-      }
-
-      // Draw the line
-      self.drawLine(self.lastCoords, newCoords, self.draw);
-
-      // Compare the mouse position to the bounding boxes of each list item
-      $.each(self.itemBoxes, function(index) {
-        // If an item overlaps...
-        if (this.intersects(newCoords.x, newCoords.y)) {
-          var elem = self.$items.eq(index);
-
-          // ...and it's not already selected, add it
-          if (!elem.hasClass('selected'))
-            self.addSelection(elem);
-        }
+    if (e.type === 'mousedown') {
+      this.lastCoords.push({
+        x: e.pageX - self.$container.offset().left,
+        y: e.pageY - self.$container.offset().top,
       });
-
-      // Make the new coordinates the last coordinates
-      self.lastCoords = $.extend({}, newCoords);
-
-    });
-
-    this.$selectarea.on('touchmove', function(e) {
-      evt = e.originalEvent;
-
-      // Store values of touches
-      var newTouches = [];
-      $.each(evt.targetTouches, function() {
-        newTouches.push({
+    }
+    else {
+      $.each(e.originalEvent.targetTouches, function() {
+        self.lastCoords.push({
           x: this.pageX - self.$container.offset().left,
           y: this.pageY - self.$container.offset().top,
         })
       });
+    }
 
-      if (typeof self.lastTouches === 'undefined') {
-          self.lastTouches = newTouches;
+    this.$selectarea.on(this.events.move, function(e) {
+      var evt = e.originalEvent;
+      var newCoords = [];
+
+      console.log(e);
+
+      // Store mouse coordinates of move
+      if (e.type === 'mousemove') {
+        newCoords.push({
+          x: e.pageX - self.$container.offset().left,
+          y: e.pageY - self.$container.offset().top,
+        });
+      }
+      // Or all touch coordinates
+      else {
+        $.each(evt.targetTouches, function() {
+          newCoords.push({
+            x: this.pageX - self.$container.offset().left,
+            y: this.pageY - self.$container.offset().top,
+          })
+        });
       }
 
-      // Draw the line
-      self.multiDrawLine(self.lastTouches, newTouches, self.draw);
+      // Draw lines
+      self.multiDrawLine(self.lastCoords, newCoords, self.draw);
 
       // Check for collisions between touches and boxes
       $.each(self.itemBoxes, function(index) {
         var rect = this;
 
-        $.each(newTouches, function() {
+        $.each(newCoords, function() {
           if (rect.intersects(this.x, this.y)) {
             var elem = self.$items.eq(index);
             if (!elem.hasClass('selected'))
@@ -232,7 +219,7 @@
       });
 
       // Make the new coordinates the last coordinates
-      self.lastTouches = newTouches;
+      self.lastCoords = newCoords;
       return false;
     });
   }
@@ -243,22 +230,18 @@
     // Disable drawing
     this.$selectarea.off(this.events.move).removeClass(this.settings.drawingClass);
 
-    // Reset coordinates
-    this.lastCoords = {};
-    this.lastTouches = {};
-
     // For good measure
     return false;
   }
-	DrawSelect.prototype.drawLine = function(from, to, context) {
-		context.strokeStyle = this.settings.lineColor;
-		context.lineWidth = 5;
-		context.beginPath();
-		context.moveTo(from.x, from.y);
-		context.lineTo(to.x, to.y);
-		context.closePath();
-		context.stroke();
-	}
+  DrawSelect.prototype.drawLine = function(from, to, context) {
+    context.strokeStyle = this.settings.lineColor;
+    context.lineWidth = 5;
+    context.beginPath();
+    context.moveTo(from.x, from.y);
+    context.lineTo(to.x, to.y);
+    context.closePath();
+    context.stroke();
+  }
   DrawSelect.prototype.multiDrawLine = function(from, to, context) {
     var self = this;
 
@@ -272,19 +255,19 @@
     this.$container.trigger('drawselect.countChange');
   }
 
-	/*	===============
-		  Rectangle class
-		  =============== */
+  /*  ===============
+      Rectangle class
+      =============== */
 
-	var Rectangle = function(x, y, w, h) {
-		this.top = y;
-		this.bottom = y + h;
-		this.left = x;
-		this.right = x + w;
-	}
-	Rectangle.prototype.intersects = function(x, y) {
-		return (x >= this.left && x <= this.right && y >= this.top && y <= this.bottom);
-	}
+  var Rectangle = function(x, y, w, h) {
+    this.top = y;
+    this.bottom = y + h;
+    this.left = x;
+    this.right = x + w;
+  }
+  Rectangle.prototype.intersects = function(x, y) {
+    return (x >= this.left && x <= this.right && y >= this.top && y <= this.bottom);
+  }
 
   $.fn.drawselect = function(settings, actions) {
     return this.find('[data-drawselect]').addBack().each(function() {
