@@ -131,8 +131,8 @@
     */
 
     // Drawing
-    this.$selectarea.on(this.events.start, function() {
-      if (self.drawEnabled) self.startDrawing();
+    this.$selectarea.on(this.events.start, function(e) {
+      if (self.drawEnabled) self.startDrawing(e);
     });
 
     // Cancelling drawing
@@ -161,83 +161,78 @@
     this.$container.addClass(this.settings.drawingClass);
     this.itemBoxes = this.getBoxes();
   }
-  DrawSelect.prototype.startDrawing = function() {
+  DrawSelect.prototype.startDrawing = function(e) {
     var self = this;
 
     this.setupDrawing();
 
-    this.$selectarea.on(self.events.move, function(e) {
-      evt = e.originalEvent;
+    this.$selectarea.on('mousemove', function(e) {
 
       // Store coordinates of mouse
-      if (!self.touchSupport) {
-        var x = e.pageX - self.$container.offset().left;  
-        var y = e.pageY - self.$container.offset().top;
+      var x = e.pageX - self.$container.offset().left;  
+      var y = e.pageY - self.$container.offset().top;
+      var newCoords = { x: x, y: y, }
 
-        var newCoords = {
-          x: x,
-          y: y,
-        }
-      }
-      // Or touches
-      else {
-        var newTouches = [];
-
-        $.each(evt.targetTouches, function() {
-          newTouches.push({
-            x: this.pageX - self.$container.offset().left,
-            y: this.pageY - self.$container.offset().top,
-          })
-        });
-      }
-
-      // If this is the first move, just establish a starting point
-      if (!self.touchSupport && typeof self.lastCoords.x !== 'number') {
+      // If this is the first move, establish a starting point
+      if (typeof self.lastCoords.x !== 'number') {
           self.lastCoords.x = x;
           self.lastCoords.y = y;
       }
-      else if (typeof self.lastTouches === 'undefined') {
+
+      // Draw the line
+      self.drawLine(self.lastCoords, newCoords, self.draw);
+
+      // Compare the mouse position to the bounding boxes of each list item
+      $.each(self.itemBoxes, function(index) {
+        // If an item overlaps...
+        if (this.intersects(newCoords.x, newCoords.y)) {
+          var elem = self.$items.eq(index);
+
+          // ...and it's not already selected, add it
+          if (!elem.hasClass('selected'))
+            self.addSelection(elem);
+        }
+      });
+
+      // Make the new coordinates the last coordinates
+      self.lastCoords = $.extend({}, newCoords);
+
+    });
+
+    this.$selectarea.on('touchmove', function(e) {
+      evt = e.originalEvent;
+
+      // Store values of touches
+      var newTouches = [];
+      $.each(evt.targetTouches, function() {
+        newTouches.push({
+          x: this.pageX - self.$container.offset().left,
+          y: this.pageY - self.$container.offset().top,
+        })
+      });
+
+      if (typeof self.lastTouches === 'undefined') {
           self.lastTouches = newTouches;
       }
-      // Otherwise draw a line from the last coordinates to the newest ones
-      else {
 
-        // Draw the line
-        if (!self.touchSupport) self.drawLine(self.lastCoords, newCoords, self.draw);
-        else self.multiDrawLine(self.lastTouches, newTouches, self.draw);
+      // Draw the line
+      self.multiDrawLine(self.lastTouches, newTouches, self.draw);
 
-        if (!self.touchSupport) {
-          // Compare the mouse position to the bounding boxes of each list item
-          $.each(self.itemBoxes, function(index) {
-            // If an item overlaps...
-            if (this.intersects(newCoords.x, newCoords.y)) {
-              var elem = self.$items.eq(index);
+      // Check for collisions between touches and boxes
+      $.each(self.itemBoxes, function(index) {
+        var rect = this;
 
-              // ...and it's not already selected...
-              if (!elem.hasClass('selected'))
-                self.addSelection(elem);
-            }
-          });
-        }
+        $.each(newTouches, function() {
+          if (rect.intersects(this.x, this.y)) {
+            var elem = self.$items.eq(index);
+            if (!elem.hasClass('selected'))
+              self.addSelection(elem);
+          }
+        });
+      });
 
-        else {
-          $.each(self.itemBoxes, function(index) {
-            var rect = this;
-
-            $.each(newTouches, function() {
-              if (rect.intersects(this.x, this.y)) {
-                var elem = self.$items.eq(index);
-                if (!elem.hasClass('selected'))
-                  self.addSelection(elem);
-              }
-            });
-          });
-        }
-
-        // Make the new coordinates the last coordinates
-        if (!self.touchSupport) self.lastCoords = $.extend({}, newCoords);
-        else self.lastTouches = newTouches;
-      }
+      // Make the new coordinates the last coordinates
+      self.lastTouches = newTouches;
       return false;
     });
   }
