@@ -28,9 +28,6 @@
     // Drawing context
     this.draw = this.canvas.getContext('2d');
 
-    // Drawing coordinates
-    this.lastCoords = [];
-
     // Drawing enabled
     this.drawEnabled = true;
 
@@ -140,10 +137,16 @@
     });
   }
 
+  /*
+    Resize the canvas to match the size of the list container
+  */
   DrawSelect.prototype.sizeCanvas = function() {
     this.canvas.width  = this.$list.outerWidth();
     this.canvas.height = this.$list.outerHeight();
   }
+  /*
+    Calculate bounding boxes for every list item
+  */
   DrawSelect.prototype.getBoxes = function() {
     var boxes = [];
     this.$items.each(function() {
@@ -156,70 +159,80 @@
     });
     return boxes;
   }
-  DrawSelect.prototype.startDrawing = function(e) {
+  /*
+    Fetch coordinates from the given MouseEvent or TouchEvent
+    Return as an array of objects containing x and y coordinates
+  */
+  DrawSelect.prototype.getCoords = function(event) {
     var self = this;
+    var coords = [];
 
-    this.$container.addClass(this.settings.drawingClass);
-    this.itemBoxes = this.getBoxes();
-
-    this.lastCoords = [];
-
-    if (e.type === 'mousedown') {
-      this.lastCoords.push({
-        x: e.pageX - self.$container.offset().left,
-        y: e.pageY - self.$container.offset().top,
+    if (event.type.match(/mouse/)) {
+      coords.push({
+        x: event.pageX - self.$container.offset().left,
+        y: event.pageY - self.$container.offset().top,
       });
     }
     else {
-      $.each(e.originalEvent.targetTouches, function() {
-        self.lastCoords.push({
+      $.each(event.originalEvent.targetTouches, function() {
+        coords.push({
           x: this.pageX - self.$container.offset().left,
           y: this.pageY - self.$container.offset().top,
         })
       });
     }
 
+    return coords;
+  }
+  /*
+    Check to see if given coordinates overlap with any list items
+    Add them to the selection if they do, and if they aren't already selected
+  */
+  DrawSelect.prototype.checkCollision = function(coords) {
+    var self = this;
+
+    // For each box...
+    $.each(self.itemBoxes, function(index) {
+      var rect = this;
+
+      // ...and each rectangle...
+      $.each(coords, function() {
+
+        // ...check if the two intersect...
+        if (rect.intersects(this.x, this.y)) {
+          var elem = self.$items.eq(index);
+
+          // ...and if the item isn't already selected, add it
+          if (!elem.hasClass('selected'))
+            self.addSelection(elem);
+        }
+      });
+    });
+  }
+  DrawSelect.prototype.startDrawing = function(e) {
+    var self = this;
+
+    this.$container.addClass(this.settings.drawingClass);
+
+    // Initial collision check (allows for single select by clicking/tapping)
+    this.itemBoxes = this.getBoxes();
+    var lastCoords = this.getCoords(e);
+    this.checkCollision(lastCoords);
+
     this.$selectarea.on(this.events.move, function(e) {
       var evt = e.originalEvent;
-      var newCoords = [];
 
-      console.log(e);
-
-      // Store mouse coordinates of move
-      if (e.type === 'mousemove') {
-        newCoords.push({
-          x: e.pageX - self.$container.offset().left,
-          y: e.pageY - self.$container.offset().top,
-        });
-      }
-      // Or all touch coordinates
-      else {
-        $.each(evt.targetTouches, function() {
-          newCoords.push({
-            x: this.pageX - self.$container.offset().left,
-            y: this.pageY - self.$container.offset().top,
-          })
-        });
-      }
+      // Get new click or touches
+      var newCoords = self.getCoords(e);
 
       // Draw lines
-      self.multiDrawLine(self.lastCoords, newCoords, self.draw);
+      self.multiDrawLine(lastCoords, newCoords, self.draw);
 
-      // Check for collisions between touches and boxes
-      $.each(self.itemBoxes, function(index) {
-        var rect = this;
-
-        $.each(newCoords, function() {
-          if (rect.intersects(this.x, this.y)) {
-            var elem = self.$items.eq(index);
-            if (!elem.hasClass('selected'))
-              self.addSelection(elem);
-          }
-        });
-      });
+      // Check collision
+      self.checkCollision(newCoords);
 
       // Make the new coordinates the last coordinates
-      self.lastCoords = newCoords;
+      lastCoords = newCoords;
       return false;
     });
   }
