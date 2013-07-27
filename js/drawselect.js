@@ -32,11 +32,13 @@
 		this.lastCoords = {};
     this.lastTouches = [];
 
+    // Drawing enabled
+    this.drawEnabled = true;
+
 		// List of bounding boxes for list items
 		this.itemBoxes     = [];
 		// List of selected items
 		this.selectedItems = [];
-    this.selectedCount = 0;
 
     // Touch support?
     if (typeof window.ontouchstart !== 'undefined') {
@@ -76,6 +78,7 @@
     this.$container.find('[data-clear]').on('click', function() {
       self.selectedItems = [];
       self.$items.removeClass('selected');
+      self.$container.trigger('drawselect.countChange');
       return false;
     });
     this.$container.find('[data-all]').on('click', function() {
@@ -84,8 +87,17 @@
         self.selectedItems.push(this);
         $(this).addClass('selected');
       });
+      self.$container.trigger('drawselect.countChange');
       return false;
     });
+
+    var editButton = this.$container.find('[data-edit]');
+    if (editButton.length > 0) {
+      this.drawEnabled = false;
+      editButton.on('click', function() {
+        self.drawEnabled = !self.drawEnabled;
+      });
+    }
 
     // Custom actions
 
@@ -102,12 +114,25 @@
     });
 
     /*
+      Other UI
+    */
+
+    this.$container.find('[data-count]').each(function() {
+      var count = this;
+      count.innerHTML = '0 items selected';
+
+      self.$container.on('drawselect.countChange', function() {
+        count.innerHTML = self.selectedItems.length + ' item' + (self.selectedItems.length !== 1 ? 's' : '') + ' selected';
+      });
+    });
+
+    /*
       Events
     */
 
     // Drawing
     this.$selectarea.on(this.events.start, function() {
-      self.startDrawing();
+      if (self.drawEnabled) self.startDrawing();
     });
 
     // Cancelling drawing
@@ -249,6 +274,7 @@
   DrawSelect.prototype.addSelection = function(elem) {
     this.selectedItems.push(elem[0]);
     elem.addClass('selected');
+    this.$container.trigger('drawselect.countChange');
   }
 
 	/*	===============
