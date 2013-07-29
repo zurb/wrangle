@@ -168,6 +168,7 @@
     var coords = [];
 
     if (event.type.match(/mouse/)) {
+      console.log(event);
       coords.push({
         x: event.pageX - self.$container.offset().left,
         y: event.pageY - self.$container.offset().top,
@@ -266,6 +267,14 @@
     this.selectedItems.push(elem[0]);
     elem.addClass('selected');
     this.$container.trigger('drawselect.countChange');
+  }
+
+  /*  ===================
+      Selected item class
+      =================== */
+
+  var DrawSelectItem = function() {
+    
   }
 
   /*  ===============

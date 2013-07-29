@@ -85,6 +85,10 @@
 		<script src="js/drawselect.js" type="text/javascript"></script>
     <script type="text/javascript">
       $(window).on('load', function(){
+        $('[data-items] > li').each(function(index) {
+          $(this).attr('data-id', index)
+        });
+
         $('[data-drawselect]').drawselect({}, {
           'delete': function(items) {
             items.remove();
