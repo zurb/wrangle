@@ -23,16 +23,21 @@
       drawingClass: 'drawing',
       selectedClass: 'selected',
       deselectable: false,
+      touchMode: 'auto',
     }
 
     // Actions
     this.actions = {};
 
+    // Add user settings/actions
+    $.extend(this.settings, settings);
+    $.extend(this.actions, actions);
+
     // Drawing context
     this.draw = this.canvas.getContext('2d');
 
     // Drawing enabled
-    this.drawEnabled = true;
+    this.drawEnabled = this.settings.touchMode === 'auto' ? true : false;
 
     // List of bounding boxes for list items
     this.itemBoxes     = [];
@@ -59,10 +64,6 @@
     /*
       Initialization
     */
-
-    // Add user settings/actions
-    $.extend(this.settings, settings);
-    $.extend(this.actions, actions);
 
     // The canvas should match the list area in dimmensions
     this.sizeCanvas();
@@ -137,6 +138,28 @@
     this.$selectarea.on(this.events.end, function() {
       self.stopDrawing();
     });
+
+    // Detecting a double tap to activate drawing
+    if (this.settings.touchMode === 'double-tap') {
+      console.log(this.drawEnabled);
+
+      var firstTap = true;
+      this.$selectarea.on('touchstart', function(e) {
+        // A double tap is two taps within 300ms of each other
+        if (firstTap) {
+          firstTap = false;
+          var timer = window.setTimeout(function() {
+            firstTap = true;
+          }, 300);
+        }
+        else {
+          firstTap = true;
+          self.drawEnabled = true;
+          self.startDrawing(e);
+          return false;
+        }
+      });
+    }
   }
 
   /*
@@ -253,6 +276,7 @@
 
     // Disable drawing
     this.$selectarea.off(this.events.move).removeClass(this.settings.drawingClass);
+    if (this.settings.touchMode === 'double-tap') this.drawEnabled = false;
 
     // For good measure
     return false;
