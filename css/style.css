@@ -13,6 +13,7 @@
 }
 .col-1 {
   width: 75%;
+  background: white;
 }
 .col-2 {
   width: 25%;
@@ -26,21 +27,20 @@
 	-webkit-user-select: none;
 }
 	#gallery canvas {
-		background: white;
-    width: 100%;
-	}
+  	position: absolute;
+  	top: 0;
+  	left: 0;
+    background: transparent;
+    z-index: 10;
+  }
+  #gallery ul {
+  	width: 100%;
+  	background: transparent;
+    padding: 1em;
+    position: relative;
+    z-index: 5;
+  }
 
-#gallery ul {
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	background: transparent;
-  padding: 1em;
-}
-#gallery.drawing ul {
-  /*pointer-events: none;*/
-}
 #gallery li {
 	width: 30%;
 	display: inline-block;

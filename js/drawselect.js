@@ -19,6 +19,7 @@
     // Settings
     this.settings = {
       lineColor: '#000000',
+      lineWidth: 5,
       drawingClass: 'drawing',
     }
 
@@ -72,9 +73,7 @@
     */
 
     this.$container.find('[data-clear]').on('click', function() {
-      self.selectedItems = [];
-      self.$items.removeClass('selected');
-      self.$container.trigger('drawselect.countChange');
+      self.deselectAll();
       return false;
     });
     this.$container.find('[data-all]').on('click', function() {
@@ -101,11 +100,12 @@
       var evt = $(this).attr('data-action');
 
       if (self.actions.hasOwnProperty(evt)) {
-        self.actions[evt].call(self, $(self.selectedItems));
+        var response = self.actions[evt].call(self, $(self.selectedItems));
+        if (response === false) self.deselectAll();
         self.sizeCanvas();
       }
       else {
-        console.log('ERROR: Your markup is referencing an undefined action, "'+evt+'"');
+        console.warn('Your markup is referencing an undefined action, "'+evt+'"');
       }
     });
 
@@ -168,7 +168,6 @@
     var coords = [];
 
     if (event.type.match(/mouse/)) {
-      console.log(event);
       coords.push({
         x: event.pageX - self.$container.offset().left,
         y: event.pageY - self.$container.offset().top,
@@ -213,7 +212,7 @@
   DrawSelect.prototype.startDrawing = function(e) {
     var self = this;
 
-    this.$container.addClass(this.settings.drawingClass);
+    this.$selectarea.addClass(this.settings.drawingClass);
 
     // Initial collision check (allows for single select by clicking/tapping)
     this.itemBoxes = this.getBoxes();
@@ -249,7 +248,7 @@
   }
   DrawSelect.prototype.drawLine = function(from, to, context) {
     context.strokeStyle = this.settings.lineColor;
-    context.lineWidth = 5;
+    context.lineWidth = this.settings.lineWidth;
     context.beginPath();
     context.moveTo(from.x, from.y);
     context.lineTo(to.x, to.y);
@@ -268,13 +267,10 @@
     elem.addClass('selected');
     this.$container.trigger('drawselect.countChange');
   }
-
-  /*  ===================
-      Selected item class
-      =================== */
-
-  var DrawSelectItem = function() {
-    
+  DrawSelect.prototype.deselectAll = function() {
+    this.selectedItems = [];
+    this.$items.removeClass('selected');
+    this.$container.trigger('drawselect.countChange');
   }
 
   /*  ===============

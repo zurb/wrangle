@@ -2,9 +2,8 @@
 <html>
 	<head>
 		<meta charset="utf8">
-		<title></title>
-		<meta name="author" content="Geoff Kimball">
-		<meta name="description" content="">
+		<title>DrawSelect demo</title>
+		<meta name="author" content="ZURB, inc.">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<link rel="stylesheet" href="css/style.css">
 	</head>
@@ -77,6 +76,7 @@
   			<a href="#" class="button" data-all>Select All</a>
         <!-- <a href="#" class="edit button" data-edit>Edit</a> -->
   			<a href="#" class="delete button" data-action="delete">Delete</a>
+        <a href="#" class="button" data-action="nope">Nope</a>
         <p data-count="item"></p>
       </div>
 		</div>
@@ -89,9 +89,14 @@
           $(this).attr('data-id', index)
         });
 
-        $('[data-drawselect]').drawselect({}, {
+        var options = {
+          lineColor: 'rgba(255,0,0,0.75)',
+          lineWidth: 20,
+        }
+        var actions = {
           'delete': function(items) {
             items.remove();
+            return false;
           },
           'reverse': function(items) {
             var rev = $.makeArray(items);
@@ -99,7 +104,8 @@
             console.log(rev);
             items.replaceWith();
           }
-        });
+        }
+        $('[data-drawselect]').drawselect(options, actions);
       });
     </script>
 	</body>
