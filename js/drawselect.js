@@ -21,6 +21,7 @@
       lineColor: '#000000',
       lineWidth: 5,
       drawingClass: 'drawing',
+      selectedClass: 'selected',
       deselectable: false,
     }
 
@@ -81,7 +82,7 @@
       self.selectedItems = [];
       self.$items.each(function() {
         self.selectedItems.push(this);
-        $(this).addClass('selected');
+        $(this).addClass(self.settings.selectedClass);
       });
       self.$container.trigger('drawselect.countChange');
       return false;
@@ -205,11 +206,11 @@
 
           // ...and if the item isn't already selected, add it
           if (!self.settings.deselectable) {
-            if (!elem.hasClass('selected')) self.select(elem);
+            if (!elem.hasClass(self.settings.selectedClass)) self.select(elem);
           }
           // For deselection mode: don't do anything if the target element was the last to be modified
           else if (prev[i] !== elem[0]) {
-            if (elem.hasClass('selected')) self.deselect(elem);
+            if (elem.hasClass(self.settings.selectedClass)) self.deselect(elem);
             else self.select(elem);
           }
           last[i] = elem[0];
