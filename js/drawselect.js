@@ -21,6 +21,7 @@
       lineColor: '#000000',
       lineWidth: 5,
       drawingClass: 'drawing',
+      deselectable: false,
     }
 
     // Actions
@@ -188,36 +189,45 @@
     Check to see if given coordinates overlap with any list items
     Add them to the selection if they do, and if they aren't already selected
   */
-  DrawSelect.prototype.checkCollision = function(coords) {
-    var self = this;
+  DrawSelect.prototype.checkCollision = function(coords, prev) {
+    var self = this, last = [];
 
     // For each box...
     $.each(self.itemBoxes, function(index) {
       var rect = this;
 
       // ...and each rectangle...
-      $.each(coords, function() {
+      $.each(coords, function(i) {
 
         // ...check if the two intersect...
         if (rect.intersects(this.x, this.y)) {
           var elem = self.$items.eq(index);
 
           // ...and if the item isn't already selected, add it
-          if (!elem.hasClass('selected'))
-            self.addSelection(elem);
+          if (!self.settings.deselectable) {
+            if (!elem.hasClass('selected')) self.select(elem);
+          }
+          // For deselection mode: don't do anything if the target element was the last to be modified
+          else if (prev[i] !== elem[0]) {
+            if (elem.hasClass('selected')) self.deselect(elem);
+            else self.select(elem);
+          }
+          last[i] = elem[0];
         }
       });
     });
+
+    return last;
   }
   DrawSelect.prototype.startDrawing = function(e) {
-    var self = this;
+    var self = this, lastElems = [];
 
     this.$selectarea.addClass(this.settings.drawingClass);
 
     // Initial collision check (allows for single select by clicking/tapping)
     this.itemBoxes = this.getBoxes();
     var lastCoords = this.getCoords(e);
-    this.checkCollision(lastCoords);
+    lastElems  = this.checkCollision(lastCoords, lastElems)
 
     this.$selectarea.on(this.events.move, function(e) {
       var evt = e.originalEvent;
@@ -229,7 +239,7 @@
       self.multiDrawLine(lastCoords, newCoords, self.draw);
 
       // Check collision
-      self.checkCollision(newCoords);
+      lastElems = self.checkCollision(newCoords, lastElems);
 
       // Make the new coordinates the last coordinates
       lastCoords = newCoords;
@@ -262,10 +272,20 @@
       self.drawLine(from[i], to[i], context);
     })
   }
-  DrawSelect.prototype.addSelection = function(elem) {
+  DrawSelect.prototype.select = function(elem) {
     this.selectedItems.push(elem[0]);
     elem.addClass('selected');
     this.$container.trigger('drawselect.countChange');
+  }
+  DrawSelect.prototype.deselect = function(elem) {
+    var index, self = this;
+    $.each(this.selectedItems, function(index) {
+      if (this === elem[0]) {
+        self.selectedItems.splice(index, 1);
+        elem.removeClass('selected');
+        self.$container.trigger('drawselect.countChange');
+      }
+    });
   }
   DrawSelect.prototype.deselectAll = function() {
     this.selectedItems = [];
