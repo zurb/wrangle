@@ -21,16 +21,20 @@
       lineColor: '#000000',
       lineWidth: 5,
       drawingClass: 'drawing',
+      selectedClass: 'selected',
+      selectToggle: false,
+      touchMode: 'auto',
     }
 
     // Actions
     this.actions = {};
 
+    // Add user settings/actions
+    $.extend(this.settings, settings);
+    $.extend(this.actions, actions);
+
     // Drawing context
     this.draw = this.canvas.getContext('2d');
-
-    // Drawing enabled
-    this.drawEnabled = true;
 
     // List of bounding boxes for list items
     this.itemBoxes     = [];
@@ -38,9 +42,10 @@
     this.selectedItems = [];
 
     // Touch support?
-    if (typeof window.ontouchstart !== 'undefined') {
-      this.touchSupport = true;
-    }
+    if (typeof window.ontouchstart !== 'undefined') this.touchSupport = true;
+
+    // Drawing enabled
+    this.drawEnabled = !this.touchSupport || this.settings.touchMode === 'auto' ? true : false;
 
     // Event listeners
     this.events = {
@@ -57,10 +62,6 @@
     /*
       Initialization
     */
-
-    // Add user settings/actions
-    $.extend(this.settings, settings);
-    $.extend(this.actions, actions);
 
     // The canvas should match the list area in dimmensions
     this.sizeCanvas();
@@ -80,7 +81,7 @@
       self.selectedItems = [];
       self.$items.each(function() {
         self.selectedItems.push(this);
-        $(this).addClass('selected');
+        $(this).addClass(self.settings.selectedClass);
       });
       self.$container.trigger('drawselect.countChange');
       return false;
@@ -135,6 +136,51 @@
     this.$selectarea.on(this.events.end, function() {
       self.stopDrawing();
     });
+
+    /*
+      Touch modes
+    */
+
+    // Double tap to draw
+    if (this.settings.touchMode === 'double-tap') {
+      var firstTap = true;
+      this.$selectarea.on('touchstart', function(e) {
+        // A double tap is two taps within 300ms of each other
+        if (firstTap) {
+          firstTap = false;
+          var timer = window.setTimeout(function() {
+            firstTap = true;
+          }, 300);
+        }
+        else {
+          firstTap = true;
+          self.drawEnabled = true;
+          self.startDrawing(e);
+
+          return false;
+        }
+      });
+    }
+    // One finger to draw, two fingers to scroll
+    else if (this.settings.touchMode === '2fscroll') {
+      this.$selectarea.on('touchstart', function(e) {
+
+        if (!self.drawEnabled) {
+          var started = Date.now();
+
+          $(this).on('touchmove', function(e) {
+            if (!self.drawEnabled && e.originalEvent.targetTouches.length === 1) {
+              if (Date.now() - started < 100) return false;
+              else {
+                self.drawEnabled = true;
+                self.startDrawing(e);
+                return false;
+              }
+            }
+          })
+        }
+      });
+    }
   }
 
   /*
@@ -188,36 +234,45 @@
     Check to see if given coordinates overlap with any list items
     Add them to the selection if they do, and if they aren't already selected
   */
-  DrawSelect.prototype.checkCollision = function(coords) {
-    var self = this;
+  DrawSelect.prototype.checkCollision = function(coords, prev) {
+    var self = this, last = [];
 
     // For each box...
     $.each(self.itemBoxes, function(index) {
       var rect = this;
 
       // ...and each rectangle...
-      $.each(coords, function() {
+      $.each(coords, function(i) {
 
         // ...check if the two intersect...
         if (rect.intersects(this.x, this.y)) {
           var elem = self.$items.eq(index);
 
           // ...and if the item isn't already selected, add it
-          if (!elem.hasClass('selected'))
-            self.addSelection(elem);
+          if (!self.settings.selectToggle) {
+            if (!elem.hasClass(self.settings.selectedClass)) self.select(elem);
+          }
+          // For deselection mode: don't do anything if the target element was the last to be modified
+          else if (prev[i] !== elem[0]) {
+            if (elem.hasClass(self.settings.selectedClass)) self.deselect(elem);
+            else self.select(elem);
+          }
+          last[i] = elem[0];
         }
       });
     });
+
+    return last;
   }
   DrawSelect.prototype.startDrawing = function(e) {
-    var self = this;
+    var self = this, lastElems = [];
 
     this.$selectarea.addClass(this.settings.drawingClass);
 
     // Initial collision check (allows for single select by clicking/tapping)
     this.itemBoxes = this.getBoxes();
     var lastCoords = this.getCoords(e);
-    this.checkCollision(lastCoords);
+    lastElems  = this.checkCollision(lastCoords, lastElems)
 
     this.$selectarea.on(this.events.move, function(e) {
       var evt = e.originalEvent;
@@ -229,7 +284,7 @@
       self.multiDrawLine(lastCoords, newCoords, self.draw);
 
       // Check collision
-      self.checkCollision(newCoords);
+      lastElems = self.checkCollision(newCoords, lastElems);
 
       // Make the new coordinates the last coordinates
       lastCoords = newCoords;
@@ -242,6 +297,7 @@
 
     // Disable drawing
     this.$selectarea.off(this.events.move).removeClass(this.settings.drawingClass);
+    if (this.touchEnabled && this.settings.touchMode !== 'auto') this.drawEnabled = false;
 
     // For good measure
     return false;
@@ -262,10 +318,20 @@
       self.drawLine(from[i], to[i], context);
     })
   }
-  DrawSelect.prototype.addSelection = function(elem) {
+  DrawSelect.prototype.select = function(elem) {
     this.selectedItems.push(elem[0]);
     elem.addClass('selected');
     this.$container.trigger('drawselect.countChange');
+  }
+  DrawSelect.prototype.deselect = function(elem) {
+    var index, self = this;
+    $.each(this.selectedItems, function(index) {
+      if (this === elem[0]) {
+        self.selectedItems.splice(index, 1);
+        elem.removeClass('selected');
+        self.$container.trigger('drawselect.countChange');
+      }
+    });
   }
   DrawSelect.prototype.deselectAll = function() {
     this.selectedItems = [];
@@ -288,7 +354,7 @@
   }
 
   $.fn.drawselect = function(settings, actions) {
-    return this.find('[data-drawselect]').addBack().each(function() {
+    return $(this).find('[data-drawselect]').addBack('[data-drawselect]').each(function() {
       var ds = new DrawSelect($(this), settings, actions);
     }).end();
   }
