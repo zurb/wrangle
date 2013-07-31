@@ -22,7 +22,7 @@
       lineWidth: 5,
       drawingClass: 'drawing',
       selectedClass: 'selected',
-      deselectable: false,
+      selectToggle: false,
       touchMode: 'auto',
     }
 
@@ -249,7 +249,7 @@
           var elem = self.$items.eq(index);
 
           // ...and if the item isn't already selected, add it
-          if (!self.settings.deselectable) {
+          if (!self.settings.selectToggle) {
             if (!elem.hasClass(self.settings.selectedClass)) self.select(elem);
           }
           // For deselection mode: don't do anything if the target element was the last to be modified
@@ -354,7 +354,7 @@
   }
 
   $.fn.drawselect = function(settings, actions) {
-    return this.find('[data-drawselect]').addBack().each(function() {
+    return $(this).find('[data-drawselect]').addBack('[data-drawselect]').each(function() {
       var ds = new DrawSelect($(this), settings, actions);
     }).end();
   }
