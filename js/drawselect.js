@@ -92,6 +92,7 @@
       this.drawEnabled = false;
       editButton.on('click', function() {
         self.drawEnabled = !self.drawEnabled;
+        self.$container.toggleClass('editable');
       });
     }
 
@@ -148,11 +149,9 @@
         // A double tap is two taps within 300ms of each other
         if (firstTap) {
           firstTap = false;
-          var timer = window.setTimeout(function() {
-            firstTap = true;
-          }, 300);
+          var then = Date.now();
         }
-        else {
+        else if (Date.now() - then <= 300) {
           firstTap = true;
           self.drawEnabled = true;
           self.startDrawing(e);
@@ -161,6 +160,7 @@
         }
       });
     }
+
     // One finger to draw, two fingers to scroll
     else if (this.settings.touchMode === '2fscroll') {
       this.$selectarea.on('touchstart', function(e) {
@@ -174,6 +174,7 @@
               else {
                 self.drawEnabled = true;
                 self.startDrawing(e);
+
                 return false;
               }
             }
@@ -292,12 +293,16 @@
     });
   }
   DrawSelect.prototype.stopDrawing = function() {
+    console.log("drawEnabled was "+this.drawEnabled);
+
     // Erase the canvas
     this.draw.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     // Disable drawing
     this.$selectarea.off(this.events.move).removeClass(this.settings.drawingClass);
-    if (this.touchEnabled && this.settings.touchMode !== 'auto') this.drawEnabled = false;
+    if (this.touchSupport && this.settings.touchMode !== 'auto') this.drawEnabled = false;
+
+    console.log("Now it's "+this.drawEnabled);
 
     // For good measure
     return false;

@@ -1,4 +1,5 @@
 /* Ghetto reset */
+
 * {
 	margin: 0;
 	padding: 0;
@@ -6,6 +7,56 @@
 	background: #ddd;
 	font-family: sans-serif;
 }
+
+/* App */
+
+#gallery {
+  width: 100%;
+  position: relative;
+  background: white;
+}
+  #gallery li {
+    width: 30%;
+    display: inline-block;
+    margin: 0 1em 1em 0;
+    padding: 1em;
+    background: #fff;
+    border: 1px solid #ccc;
+  }
+    #gallery li img {
+      width: 100%;
+      height: auto;
+    }
+    #gallery li.selected {
+      border-color: red;
+      background: rgba(255, 0, 0, 0.1);
+    }
+
+/* DrawSelect */
+
+[data-selectarea] {
+  position: relative;
+	-webkit-user-select: none;
+}
+[data-canvas] {
+	position: absolute;
+	top: 0;
+	left: 0;
+  background: transparent;
+  z-index: 10;
+}
+[data-items] {
+	width: 100%;
+	background: transparent;
+  padding: 1em;
+  position: relative;
+  z-index: 5;
+}
+  [data-items] li {
+    pointer-events: none;
+  }
+
+/* Ghetto columns */
 
 .col-1, .col-2 {
   float: left;
@@ -20,44 +71,7 @@
   padding: 1em;
 }
 
-#gallery {
-	width: 100%;
-	position: relative;
-	background: white;
-	-webkit-user-select: none;
-}
-	#gallery canvas {
-  	position: absolute;
-  	top: 0;
-  	left: 0;
-    background: transparent;
-    z-index: 10;
-  }
-  #gallery ul {
-  	width: 100%;
-  	background: transparent;
-    padding: 1em;
-    position: relative;
-    z-index: 5;
-  }
-
-#gallery li {
-	width: 30%;
-	display: inline-block;
-	margin: 0 1em 1em 0;
-	padding: 1em;
-	background: #fff;
-	border: 1px solid #ccc;
-	pointer-events: none;
-}
-	#gallery li img {
-		width: 100%;
-		height: auto;
-	}
-	#gallery li.selected {
-		border-color: red;
-		background: rgba(255, 0, 0, 0.1);
-	}
+/* Ghetto buttons */
 
 .button {
 	display: block;
