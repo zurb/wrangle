@@ -36,18 +36,16 @@
     // Drawing context
     this.draw = this.canvas.getContext('2d');
 
-    // Drawing enabled
-    this.drawEnabled = this.settings.touchMode === 'auto' ? true : false;
-
     // List of bounding boxes for list items
     this.itemBoxes     = [];
     // List of selected items
     this.selectedItems = [];
 
     // Touch support?
-    if (typeof window.ontouchstart !== 'undefined') {
-      this.touchSupport = true;
-    }
+    if (typeof window.ontouchstart !== 'undefined') this.touchSupport = true;
+
+    // Drawing enabled
+    this.drawEnabled = !this.touchSupport || this.settings.touchMode === 'auto' ? true : false;
 
     // Event listeners
     this.events = {
@@ -139,10 +137,12 @@
       self.stopDrawing();
     });
 
-    // Detecting a double tap to activate drawing
-    if (this.settings.touchMode === 'double-tap') {
-      console.log(this.drawEnabled);
+    /*
+      Touch modes
+    */
 
+    // Double tap to draw
+    if (this.settings.touchMode === 'double-tap') {
       var firstTap = true;
       this.$selectarea.on('touchstart', function(e) {
         // A double tap is two taps within 300ms of each other
@@ -156,7 +156,28 @@
           firstTap = true;
           self.drawEnabled = true;
           self.startDrawing(e);
+
           return false;
+        }
+      });
+    }
+    // One finger to draw, two fingers to scroll
+    else if (this.settings.touchMode === '2fscroll') {
+      this.$selectarea.on('touchstart', function(e) {
+
+        if (!self.drawEnabled) {
+          var started = Date.now();
+
+          $(this).on('touchmove', function(e) {
+            if (!self.drawEnabled && e.originalEvent.targetTouches.length === 1) {
+              if (Date.now() - started < 100) return false;
+              else {
+                self.drawEnabled = true;
+                self.startDrawing(e);
+                return false;
+              }
+            }
+          })
         }
       });
     }
@@ -276,7 +297,7 @@
 
     // Disable drawing
     this.$selectarea.off(this.events.move).removeClass(this.settings.drawingClass);
-    if (this.settings.touchMode === 'double-tap') this.drawEnabled = false;
+    if (this.touchEnabled && this.settings.touchMode !== 'auto') this.drawEnabled = false;
 
     // For good measure
     return false;
