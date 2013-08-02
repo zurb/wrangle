@@ -290,7 +290,7 @@
 
     // Prevent touch devices from firing fake mouse events (this will cause a double selection)
     if (this.touchSupport) {
-      $(e.target).one('mousemove', function() {
+      $(e.target).one('mousedown mousemove mouseup', function() {
         return false;
       });
     }
