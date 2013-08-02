@@ -24,6 +24,7 @@
       selectedClass: 'selected',
       selectToggle: false,
       touchMode: 'auto',
+      clearOnCancel: true,
     }
 
     // Actions
@@ -91,8 +92,17 @@
     if (editButton.length > 0) {
       this.drawEnabled = false;
       editButton.on('click', function() {
+        // Toggle drawable state
         self.drawEnabled = !self.drawEnabled;
+        if (!self.drawEnabled && self.settings.clearOnCancel) self.deselectAll();
         self.$container.toggleClass('editable');
+
+        // Switch button text
+        var alttext = $(this).attr('data-alttext');
+        if (typeof alttext !== 'undefined') {  
+          $(this).attr('data-alttext', $(this).text());
+          $(this).text(alttext);
+        }
       });
     }
 
@@ -144,12 +154,12 @@
 
     // Double tap to draw
     if (this.settings.touchMode === 'double-tap') {
-      var firstTap = true;
+      var firstTap = true, then;
       this.$selectarea.on('touchstart', function(e) {
         // A double tap is two taps within 300ms of each other
         if (firstTap) {
           firstTap = false;
-          var then = Date.now();
+          then = Date.now();
         }
         else if (Date.now() - then <= 300) {
           firstTap = true;
@@ -157,6 +167,9 @@
           self.startDrawing(e);
 
           return false;
+        }
+        else {
+          firstTap = true;
         }
       });
     }
@@ -268,12 +281,19 @@
   DrawSelect.prototype.startDrawing = function(e) {
     var self = this, lastElems = [];
 
-    this.$selectarea.addClass(this.settings.drawingClass);
+    this.$container.addClass(this.settings.drawingClass);
 
     // Initial collision check (allows for single select by clicking/tapping)
     this.itemBoxes = this.getBoxes();
     var lastCoords = this.getCoords(e);
     lastElems  = this.checkCollision(lastCoords, lastElems)
+
+    // Prevent touch devices from firing fake mouse events (this will cause a double selection)
+    if (this.touchSupport) {
+      $(e.target).one('mousemove', function() {
+        return false;
+      });
+    }
 
     this.$selectarea.on(this.events.move, function(e) {
       var evt = e.originalEvent;
@@ -293,16 +313,13 @@
     });
   }
   DrawSelect.prototype.stopDrawing = function() {
-    console.log("drawEnabled was "+this.drawEnabled);
-
     // Erase the canvas
     this.draw.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     // Disable drawing
-    this.$selectarea.off(this.events.move).removeClass(this.settings.drawingClass);
+    this.$selectarea.off(this.events.move);
+    this.$container.removeClass(this.settings.drawingClass);
     if (this.touchSupport && this.settings.touchMode !== 'auto') this.drawEnabled = false;
-
-    console.log("Now it's "+this.drawEnabled);
 
     // For good measure
     return false;

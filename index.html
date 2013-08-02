@@ -74,7 +74,7 @@
       <div class="col-2">
   			<a href="#" class="button" data-clear>Select None</a>
   			<a href="#" class="button" data-all>Select All</a>
-        <!-- <a href="#" class="edit button" data-edit>Edit</a> -->
+        <a href="#" class="edit button" data-edit data-alttext="Cancel">Edit</a>
   			<a href="#" class="delete button" data-action="delete">Delete</a>
         <p data-count="photo"></p>
       </div>
@@ -94,7 +94,6 @@
           lineColor: 'rgba(255,0,0,0.75)',
           lineWidth: 5,
           selectToggle: true,
-          touchMode: '2fscroll',
         }
         var actions = {
           'delete': function(items) {
