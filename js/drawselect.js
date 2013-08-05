@@ -44,9 +44,12 @@
 
     // Touch support?
     if (typeof window.ontouchstart !== 'undefined') this.touchSupport = true;
+    // Microsoft special edition touch events?
+    if (window.navigator.msPointerEnabled) this.msTouchSupport = true;
 
     // Drawing enabled
     this.drawEnabled = !this.touchSupport || this.settings.touchMode === 'auto' ? true : false;
+    this.drawInProgress = false;
 
     // Event listeners
     this.events = {
@@ -59,6 +62,11 @@
       this.events.move  += ' touchmove';
       this.events.end   += ' touchcancel touchend touchleave';
     }
+    if (this.msTouchSupport) {
+      this.events.start += ' MSPointerDown';
+      this.events.move  += ' MSPointerMove';
+      this.events.end   += ' MSPointerUp MSPointerOut';
+    }
 
     /*
       Initialization
@@ -66,7 +74,7 @@
 
     // The canvas should match the list area in dimmensions
     this.sizeCanvas();
-    this.$list.on('resize', function() {
+    $(window).on('resize', function() {
       self.sizeCanvas();
     });
 
@@ -79,12 +87,7 @@
       return false;
     });
     this.$container.find('[data-all]').on('click', function() {
-      self.selectedItems = [];
-      self.$items.each(function() {
-        self.selectedItems.push(this);
-        $(this).addClass(self.settings.selectedClass);
-      });
-      self.$container.trigger('drawselect.countChange');
+      self.selectAll();
       return false;
     });
 
@@ -227,7 +230,13 @@
     var self = this;
     var coords = [];
 
-    if (event.type.match(/mouse/)) {
+    if (this.msTouchSupport) {
+      coords.push({
+        x: event.originalEvent.pageX,
+        y: event.originalEvent.pageX,
+      });
+    }
+    else if (event.type.match(/mouse/)) {
       coords.push({
         x: event.pageX - self.$container.offset().left,
         y: event.pageY - self.$container.offset().top,
@@ -281,10 +290,13 @@
   DrawSelect.prototype.startDrawing = function(e) {
     var self = this, lastElems = [];
 
-    this.$container.addClass(this.settings.drawingClass);
+    // Only do setup once
+    if (!this.drawInProgress) {
+      this.itemBoxes = this.getBoxes();
+      this.$container.addClass(this.settings.drawingClass);
+    }
 
     // Initial collision check (allows for single select by clicking/tapping)
-    this.itemBoxes = this.getBoxes();
     var lastCoords = this.getCoords(e);
     lastElems  = this.checkCollision(lastCoords, lastElems)
 
@@ -296,6 +308,7 @@
     }
 
     this.$selectarea.on(this.events.move, function(e) {
+      self.drawInProgress = true;
       var evt = e.originalEvent;
 
       // Get new click or touches
@@ -309,8 +322,13 @@
 
       // Make the new coordinates the last coordinates
       lastCoords = newCoords;
+
+      // Prevent scrolling
       return false;
     });
+
+    // Prevent default behavior
+    return false;
   }
   DrawSelect.prototype.stopDrawing = function() {
     // Erase the canvas
@@ -320,6 +338,8 @@
     this.$selectarea.off(this.events.move);
     this.$container.removeClass(this.settings.drawingClass);
     if (this.touchSupport && this.settings.touchMode !== 'auto') this.drawEnabled = false;
+
+    this.drawInProgress = false;
 
     // For good measure
     return false;
@@ -343,6 +363,15 @@
   DrawSelect.prototype.select = function(elem) {
     this.selectedItems.push(elem[0]);
     elem.addClass('selected');
+    this.$container.trigger('drawselect.countChange');
+  }
+  DrawSelect.prototype.selectAll = function() {
+    var self = this;
+    this.selectedItems = [];
+    this.$items.each(function() {
+      self.selectedItems.push(this);
+      $(this).addClass(self.settings.selectedClass);
+    });
     this.$container.trigger('drawselect.countChange');
   }
   DrawSelect.prototype.deselect = function(elem) {
