@@ -20,6 +20,7 @@
     this.settings = {
       lineColor: '#000000',
       lineWidth: 5,
+      editableClass: 'editable',
       drawingClass: 'drawing',
       selectedClass: 'selected',
       selectToggle: false,
@@ -98,7 +99,7 @@
         // Toggle drawable state
         self.drawEnabled = !self.drawEnabled;
         if (!self.drawEnabled && self.settings.clearOnCancel) self.deselectAll();
-        self.$container.toggleClass('editable');
+        self.$container.toggleClass(self.settings.editableClass);
 
         // Switch button text
         var alttext = $(this).attr('data-alttext');
@@ -223,34 +224,36 @@
     return boxes;
   }
   /*
-    Fetch coordinates from the given MouseEvent or TouchEvent
+    Fetch coordinates from the given MouseEvent, TouchEvent, or MSPointerEvent
     Return as an array of objects containing x and y coordinates
   */
   DrawSelect.prototype.getCoords = function(event) {
     var self = this;
     var coords = [];
+    var offset = self.$container.offset();
 
     if (this.msTouchSupport) {
-      coords.push({
-        x: event.originalEvent.pageX,
-        y: event.originalEvent.pageX,
-      });
+      coords[event.originalEvent.pointerId] = {
+        x: event.originalEvent.pageX - offset.left,
+        y: event.originalEvent.pageY - offset.top,
+      };
     }
     else if (event.type.match(/mouse/)) {
       coords.push({
-        x: event.pageX - self.$container.offset().left,
-        y: event.pageY - self.$container.offset().top,
+        x: event.pageX - offset.left,
+        y: event.pageY - offset.top,
       });
     }
     else {
       $.each(event.originalEvent.targetTouches, function() {
         coords.push({
-          x: this.pageX - self.$container.offset().left,
-          y: this.pageY - self.$container.offset().top,
+          x: this.pageX - offset.left,
+          y: this.pageY - offset.top,
         })
       });
     }
 
+    
     return coords;
   }
   /*
