@@ -203,6 +203,8 @@
 
   /*
     Resize the canvas to match the size of the list container
+
+    Doesn't return anything
   */
   DrawSelect.prototype.sizeCanvas = function() {
     this.canvas.width  = this.$list.outerWidth();
@@ -210,6 +212,8 @@
   }
   /*
     Calculate bounding boxes for every list item
+
+    Returns an array of Rectangle objects indicating the size/location of each list item
   */
   DrawSelect.prototype.getBoxes = function() {
     var boxes = [];
@@ -226,6 +230,10 @@
   /*
     Fetch coordinates from the given MouseEvent, TouchEvent, or MSPointerEvent
     Return as an array of objects containing x and y coordinates
+
+    @param event: a jQuery event representing a Mouse, Touch, or MSPointer event
+
+    Returns an array of coordinates based on mouse/touch movement
   */
   DrawSelect.prototype.getCoords = function(event) {
     var self = this;
@@ -253,18 +261,24 @@
       });
     }
 
-    
     return coords;
   }
   /*
     Check to see if given coordinates overlap with any list items
     Add them to the selection if they do, and if they aren't already selected
+
+    @param coords: array of coordinates from mouse or touch input
+    @param prev: array of DOM elements representing the last selections to be made
+
+    Returns list of selections made
   */
   DrawSelect.prototype.checkCollision = function(coords, prev) {
     var self = this, last = [];
 
     // For each box...
     $.each(self.itemBoxes, function(index) {
+      // If this === window, then we're inside an empty part of the array
+      if (this === window) return;
       var rect = this;
 
       // ...and each rectangle...
@@ -276,7 +290,7 @@
 
           // ...and if the item isn't already selected, add it
           if (!self.settings.selectToggle) {
-            if (!elem.hasClass(self.settings.selectedClass)) self.select(elem);
+            self.select(elem, index);
           }
           // For deselection mode: don't do anything if the target element was the last to be modified
           else if (prev[i] !== elem[0]) {
@@ -285,11 +299,21 @@
           }
           last[i] = elem[0];
         }
+        else {
+        }
       });
     });
 
     return last;
   }
+  /*
+    Called on mouse, touch, or MSPointer down
+    Sets up the drawing environment and adds event handlers for move events
+
+    @param e: jQuery event representing a mousedown, touchstart, or MSPointerStart event
+
+    Returns false to prevent default event behavior (namely, viewport scrolling on touch devices)
+  */
   DrawSelect.prototype.startDrawing = function(e) {
     var self = this, lastElems = [];
 
@@ -333,20 +357,45 @@
     // Prevent default behavior
     return false;
   }
-  DrawSelect.prototype.stopDrawing = function() {
-    // Erase the canvas
-    this.draw.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  /*
+    Called on mouseup, mouseout, touchup, touchleave, touchcancel, MSPointerUp, or MSPointerOut
+    Basically whenever the user lifts a mouse or finger.
 
-    // Disable drawing
-    this.$selectarea.off(this.events.move);
-    this.$container.removeClass(this.settings.drawingClass);
-    if (this.touchSupport && this.settings.touchMode !== 'auto') this.drawEnabled = false;
+    Starts a 50ms timer to cancel drawing if the user ceases all input.
+    When drawing is stopped, the canvas is cleared and styling classes are removed.
+
+    Returns false to prevent default event behavior
+  */
+  DrawSelect.prototype.stopDrawing = function() {
+    var self = this;
 
     this.drawInProgress = false;
+
+    window.drawTimeout = window.setTimeout(function() {
+      if (!self.drawInProgress) {
+        // Erase the canvas
+        self.draw.clearRect(0, 0, self.canvas.width, self.canvas.height);
+
+        // Disable drawing
+        self.$selectarea.off(self.events.move);
+        self.$container.removeClass(self.settings.drawingClass);
+        if (self.touchSupport && self.settings.touchMode !== 'auto') self.drawEnabled = false;
+      }
+    }, 50);
 
     // For good measure
     return false;
   }
+
+  /*
+    Draw a line on the canvas from and to the given points
+
+    @param from: an object with X and Y coordinates representing the start of the stroke
+    @param to: an object with X and Y coordinates representing the end of the stroke
+    @param context: a CanvasRenderingContext2D object to draw with
+
+    Doesn't return anything
+  */
   DrawSelect.prototype.drawLine = function(from, to, context) {
     context.strokeStyle = this.settings.lineColor;
     context.lineWidth = this.settings.lineWidth;
@@ -356,24 +405,45 @@
     context.closePath();
     context.stroke();
   }
+  /*
+    Draws multiple lines based on an array of coordinates. A line is only drawn if a set of coordinates with matching indices in the array are available
+
+    @param from: an array of objects with X and Y coordinates representing the starts of strokes
+    @param to: an array of objects with X and Y coordinates representing the ends of strokes
+    @param context: a CanvasRenderingContext2D object to draw with
+
+    Doesn't return anything
+  */
   DrawSelect.prototype.multiDrawLine = function(from, to, context) {
     var self = this;
 
     $.each(from, function(i) {
-      self.drawLine(from[i], to[i], context);
+      if (typeof to[i] === 'object') self.drawLine(from[i], to[i], context);
     })
   }
-  DrawSelect.prototype.select = function(elem) {
+
+  /*
+    Select an item. The selection is added to an array of selected items, and the bounding box of the selected item is removed from the array of bounding boxes. This prevents the item from being selected twice, and speeds up collision checking by reducing the number of checks needed.
+
+    @param elem: jQuery element representing DOM element to be added to the selection
+    @param index: index of the bounding box of the selected item
+
+    Doesn't return anything
+  */
+  DrawSelect.prototype.select = function(elem, index) {
     this.selectedItems.push(elem[0]);
-    elem.addClass('selected');
+    if (typeof index === 'number') delete this.itemBoxes[index];
+    elem.addClass(this.settings.selectedClass);
     this.$container.trigger('drawselect.countChange');
   }
+  /*
+
+  */
   DrawSelect.prototype.selectAll = function() {
     var self = this;
     this.selectedItems = [];
     this.$items.each(function() {
-      self.selectedItems.push(this);
-      $(this).addClass(self.settings.selectedClass);
+      self.select(this);
     });
     this.$container.trigger('drawselect.countChange');
   }
