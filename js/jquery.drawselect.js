@@ -398,7 +398,10 @@
   */
   DrawSelect.prototype.drawLine = function(from, to, context) {
     context.strokeStyle = this.settings.lineColor;
-    context.lineWidth = this.settings.lineWidth;
+    context.lineWidth   = this.settings.lineWidth;
+    context.lineJoin    = 'round';
+    context.lineCap     = 'round';
+
     context.beginPath();
     context.moveTo(from.x, from.y);
     context.lineTo(to.x, to.y);
