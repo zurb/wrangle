@@ -34,7 +34,7 @@
 
 /* DrawSelect */
 
-[data-wrangle] {
+[data-selectarea] {
   position: relative;
 	-webkit-user-select: none;
      -moz-user-select: none;
@@ -56,7 +56,7 @@
   position: relative;
   z-index: 5;
 }
-  [data-list] li {
+  [data-items] li {
     pointer-events: none;
   }
 
