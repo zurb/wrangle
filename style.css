@@ -49,14 +49,14 @@
   background: transparent;
   z-index: 10;
 }
-[data-items] {
+[data-list] {
 	width: 100%;
 	background: transparent;
   padding: 1em;
   position: relative;
   z-index: 5;
 }
-  [data-items] li {
+  [data-list] li {
     pointer-events: none;
   }
 
