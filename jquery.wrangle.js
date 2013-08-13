@@ -248,7 +248,7 @@
 
     // MSPointer event
     if (event.type.match(/MS/)) {
-      coords[event.originalEvent.pointerId.toString()] = {
+      coords.push = {
         x: event.originalEvent.pageX - offset.left,
         y: event.originalEvent.pageY - offset.top,
       };
